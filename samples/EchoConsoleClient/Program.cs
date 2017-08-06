@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Threading.Tasks;
 using WebSocketManager.Client;
+using WebSocketManager.Common;
+
 public class Program
 {
     private static Connection _connection;
@@ -13,7 +15,14 @@ public class Program
             Console.WriteLine($"{arguments[0]} said: {arguments[1]}");
         });
 
-        Console.ReadLine();
+        while (true)
+        {
+            string msg = Console.ReadLine();
+            if (string.IsNullOrEmpty(msg))
+                break;
+
+            _connection.Invoke("SendMessage", new string[]{_connection.ConnectionId, msg});
+        }
         StopConnectionAsync();
     }
 

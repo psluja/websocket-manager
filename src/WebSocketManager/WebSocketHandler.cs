@@ -66,7 +66,7 @@ namespace WebSocketManager
             }
         }
 
-        public async Task InvokeClientMethodAsync(string socketId, string methodName, object[] arguments)
+        public async Task InvokeClientMethodAsync(string socketId, string methodName, params object[] arguments)
         {
             var message = new Message()
             {

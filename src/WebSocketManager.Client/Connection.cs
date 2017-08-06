@@ -54,6 +54,26 @@ namespace WebSocketManager.Client
             _handlers.Add(methodName, invocationHandler);
         }
 
+        public async Task Invoke(string methodName, string[] msg)
+        {
+            if (_clientWebSocket.State != WebSocketState.Open)
+                return;
+
+
+            var serializedMessage = JsonConvert.SerializeObject(new InvocationDescriptor()
+            {
+                MethodName = methodName,
+                Arguments = msg,
+            }, _jsonSerializerSettings);
+            
+            await _clientWebSocket.SendAsync(buffer: new ArraySegment<byte>(array: Encoding.ASCII.GetBytes(serializedMessage),
+                                                                  offset: 0,
+                                                                  count: serializedMessage.Length),
+                                   messageType: WebSocketMessageType.Text,
+                                   endOfMessage: true,
+                                   cancellationToken: CancellationToken.None).ConfigureAwait(false);
+        }
+
         private void Invoke(InvocationDescriptor invocationDescriptor)
         {
             var invocationHandler = _handlers[invocationDescriptor.MethodName];
