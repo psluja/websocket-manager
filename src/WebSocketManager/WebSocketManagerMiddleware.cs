@@ -26,10 +26,13 @@ namespace WebSocketManager
                 return;
 
             var socket = await context.WebSockets.AcceptWebSocketAsync().ConfigureAwait(false);
-            await _webSocketHandler.OnConnected(socket).ConfigureAwait(false);
+
+            _webSocketHandler.CurrentWebSocket = socket;
+            await _webSocketHandler.OnConnected(socket, context).ConfigureAwait(false);
 
             await Receive(socket, async (result, serializedInvocationDescriptor) =>
             {
+                _webSocketHandler.CurrentWebSocket = socket;
                 if (result.MessageType == WebSocketMessageType.Text)
                 {
                     await _webSocketHandler.ReceiveAsync(socket, result, serializedInvocationDescriptor).ConfigureAwait(false);
@@ -40,7 +43,7 @@ namespace WebSocketManager
                 {
                     try
                     {
-                        await _webSocketHandler.OnDisconnected(socket);
+                        await _webSocketHandler.OnDisconnected(socket, context);
                     }
 
                     catch (WebSocketException)
