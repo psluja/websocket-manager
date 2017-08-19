@@ -25,17 +25,20 @@ namespace WebSocketManager
             if (!context.WebSockets.IsWebSocketRequest)
                 return;
 
-            var socket = await context.WebSockets.AcceptWebSocketAsync().ConfigureAwait(false);
+            if(_webSocketHandler.IsValid(context) == false)
+                return;
+
+            var socket = await context.WebSockets.AcceptWebSocketAsync();
 
             _webSocketHandler.CurrentWebSocket = socket;
-            await _webSocketHandler.OnConnected(socket, context).ConfigureAwait(false);
+            await _webSocketHandler.OnConnected(socket, context);
 
             await Receive(socket, async (result, serializedInvocationDescriptor) =>
             {
                 _webSocketHandler.CurrentWebSocket = socket;
                 if (result.MessageType == WebSocketMessageType.Text)
                 {
-                    await _webSocketHandler.ReceiveAsync(socket, result, serializedInvocationDescriptor).ConfigureAwait(false);
+                    await _webSocketHandler.ReceiveAsync(socket, result, serializedInvocationDescriptor);//.ConfigureAwait(false);
                     return;
                 }
 
@@ -43,6 +46,7 @@ namespace WebSocketManager
                 {
                     try
                     {
+                        _webSocketHandler.CurrentWebSocket = null;                        
                         await _webSocketHandler.OnDisconnected(socket, context);
                     }
 
@@ -60,7 +64,7 @@ namespace WebSocketManager
             //await _next.Invoke(context);
         }
 
-        private async Task Receive(WebSocket socket, Action<WebSocketReceiveResult, string> handleMessage)
+        private async Task Receive(WebSocket socket, Func<WebSocketReceiveResult, string, Task> handleMessage)
         {
             while (socket.State == WebSocketState.Open)
             {
@@ -71,8 +75,8 @@ namespace WebSocketManager
                 {
                     do
                     {
-                        result = await socket.ReceiveAsync(buffer, CancellationToken.None).ConfigureAwait(false);
-                        ms.Write(buffer.Array, buffer.Offset, result.Count);
+                        result = await socket.ReceiveAsync(buffer, CancellationToken.None);//.ConfigureAwait(false);
+                        await ms.WriteAsync(buffer.Array, buffer.Offset, result.Count);
                     }
                     while (!result.EndOfMessage);
 
@@ -80,11 +84,11 @@ namespace WebSocketManager
 
                     using (var reader = new StreamReader(ms, Encoding.UTF8))
                     {
-                        serializedInvocationDescriptor = await reader.ReadToEndAsync().ConfigureAwait(false);
+                        serializedInvocationDescriptor = await reader.ReadToEndAsync();//.ConfigureAwait(false);
                     }
                 }
 
-                handleMessage(result, serializedInvocationDescriptor);
+               await handleMessage(result, serializedInvocationDescriptor);
             }
         }
     }

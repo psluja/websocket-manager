@@ -106,7 +106,7 @@ namespace WebSocketManager
                 {
                     MessageType = MessageType.Text,
                     Data = $"Cannot find method {invocationDescriptor.MethodName}"
-                }).ConfigureAwait(false);
+                });//.ConfigureAwait(false);
                 return;
             }
 
@@ -120,7 +120,7 @@ namespace WebSocketManager
                 {
                     MessageType = MessageType.Text,
                     Data = $"The {invocationDescriptor.MethodName} method does not take {invocationDescriptor.Arguments.Length} parameters!"
-                }).ConfigureAwait(false);
+                });//.ConfigureAwait(false);
             }
 
             catch (ArgumentException e)
@@ -129,8 +129,13 @@ namespace WebSocketManager
                 {
                     MessageType = MessageType.Text,
                     Data = $"The {invocationDescriptor.MethodName} method takes different arguments!"
-                }).ConfigureAwait(false);
+                });//.ConfigureAwait(false);
             }
+        }
+
+        public virtual bool  IsValid(HttpContext context)
+        {
+            return true;
         }
     }
 }
